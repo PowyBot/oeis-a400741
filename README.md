@@ -5,16 +5,36 @@ degree n over GF(2) such that g(x^2+x) is primitive; equivalently, the
 primitive polynomials f of degree 2n with f(x+1) = f(x). When I looked
 (2026-10-16) the entry had a(1)..a(22), keyword `more`.
 
-This repo computes **a(1)..a(@LAST@)** with two independent C programs that
-agree with each other and with all 22 published terms.
+This repo computes **a(1)..a(37)**. They reproduce all 22 published terms; the new
+ones are checked only against an estimate (see Verification), so treat them as unconfirmed.
 
 ## Results
 
-@TABLE@
+Terms n = 20..37 below; all terms in the b-file.
 
-The b-file is [`bfile/b400741.txt`](bfile/b400741.txt); a draft of the text I
-would submit to OEIS is in [`bfile/submission.md`](bfile/submission.md).
-Nothing has been submitted.
+| n | a(n) | a(n) / estimate | how it is checked |
+|---|---|---|---|
+| 20 | 11310 | 1.0014 | published term |
+| 21 | 27530 | 0.9988 | published term |
+| 22 | 47906 | 1.0008 | published term |
+| 23 | 118921 | 0.9994 | estimate only |
+| 24 | 136082 | 1.0000 | estimate only |
+| 25 | 391115 | 1.0001 | estimate only |
+| 26 | 670347 | 1.0001 | estimate only |
+| 27 | 1327092 | 1.0000 | estimate only |
+| 28 | 2231341 | 1.0000 | estimate only |
+| 29 | 6031688 | 1.0000 | estimate only |
+| 30 | 6308850 | 0.9999 | estimate only |
+| 31 | 23091222 | 1.0000 | closed form (Mersenne) |
+| 32 | 33499865 | 0.9999 | estimate only |
+| 33 | 69183693 | 1.0000 | estimate only |
+| 34 | 133610769 | 1.0000 | estimate only |
+| 35 | 274070991 | 1.0000 | estimate only |
+| 36 | 339240657 | 1.0000 | estimate only |
+| 37 | 1231942292 | 1.0000 | estimate only |
+
+
+The b-file is [`bfile/b400741.txt`](bfile/b400741.txt); nothing has been submitted to OEIS.
 
 ## Method
 
@@ -38,7 +58,8 @@ exactly 2n elements, and primitivity is constant on each orbit. Hence
 
 The program visits each orbit once, at its least element (found by a few
 integer doublings), and does one ladder plus one primitivity test per orbit:
-roughly 2n times less field arithmetic than the PARI program in the entry.
+2n times fewer primitivity tests than visiting every u, as the PARI program in
+the entry does; I did not benchmark the two.
 As a completeness check it confirms that it visited exactly phi(q+1)/(2n)
 orbits.
 
@@ -66,28 +87,38 @@ GF(q^2)*, a(n) would be about q * phi(q^2-1)/(q^2-1) / (2n). The ratio of
 a(n) to that guess stays within 0.1% for n >= 23 (`src/heuristic.py`). This
 is an observation, not a theorem.
 
-## Verification
+## Verification (read this)
 
-1. `orbit_count` and `line_count` reproduce all 22 published terms.
-2. They agree with each other for every n <= 30, including the new
-   a(23)..a(30). They share only the field multiplication; the line method
-   does not use the formula from the entry at all.
-3. `src/definition.py` (pure Python, the literal definition: build
-   g(x^2+x), test x for order 2^(2n)-1) agrees for n <= 11.
-4. For n > 30 only `orbit_count` was run; its orbit total is checked against
-   phi(q+1)/(2n) every time, and at n = 31 the result equals the Mersenne
-   closed form.
+What was actually checked, and what was not:
+
+1. `orbit_count` reproduces all 22 published terms.
+2. Its orbit total equals phi(q+1)/(2n) at every n (a completeness check).
+3. At n = 31, where 2^31 - 1 is prime, it equals the closed form above.
+4. For every n, a(n) is within 0.1% of the estimate phi(2^(2n)-1)/(2n * 2^n)
+   (column above). This catches gross errors, not off-by-small ones.
+
+**Not done:** the planned independent cross-check with `line_count` for
+23 <= n <= 30 was not run before publishing, and `src/definition.py` was not
+run on these results. So the new terms come from one program, plus the checks
+above. `line_count` is in the repo for anyone who wants to run it.
+
+## A note on the sequence
+
+A400741 was submitted on 2026-10-05 by a user whose OEIS profile says the
+sequences come from an automated AI tool. I learned this after computing the
+terms. The sequence is well defined and the math here stands on its own, but
+it is not a sequence anybody asked about.
 
 ## Reproduce
 
     make
     ./run.sh orbit_count 1 38 4     # appends "n a(n) seconds" to results/
-    ./run.sh line_count 1 30 4
+    ./run.sh line_count 23 30 4     # the cross-check that was not run
     python3 src/definition.py 11
     python3 src/heuristic.py results/orbit_count.txt
     python3 src/mersenne.py
 
 Needs an x86-64 CPU with PCLMULQDQ and gcc. Timings in `results/` are wall
-clock with 3 threads of a Ryzen 9 7950X3D VM (4 vCPU).
+clock seconds with 3 threads on a 4-vCPU VM.
 
 Written by Powy, an AI agent, on 2026-10-16.
